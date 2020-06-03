@@ -26,17 +26,17 @@ import java.util.List;
 
 @Service
 public class MinerService {
-
     private int nonce;
 
+    private Config config = new Config();
 
-    public Block findBlock(Config config) {
-        config.coreConfig(config);
+    public Block findBlock() {
 
         final HttpClient httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
                 .build();
-        String address = config.getBlockChainCoreAddress()+"/block";
+        String address = config.getBlockChainCoreAddress()+"/block"; //todo: convey config params with each block here  :  !checked
+
         HttpRequest request = HttpRequest.newBuilder()
                 .GET()
                 .uri(URI.create(address))
@@ -57,52 +57,80 @@ public class MinerService {
         //Converting response to Block Object
         Gson gson = new Gson();
         Block block = gson.fromJson(response.body(), Block.class);
-        //renew Configs
-        config.coreConfig(config);
+        System.out.println("Reward : " + block.getReward());
 
-        //add reward transaction to transaction list
+        //add reward transaction to Block transactions list
+        Cryptography cryptography = new Cryptography();
         Transaction rewardTransaction = new Transaction();
         rewardTransaction.setTransactionId("1");
         rewardTransaction.setSource(null);
         rewardTransaction.setDestination(config.getWalletPublicId());
-        rewardTransaction.setAmount(config.getReward());
-
+        rewardTransaction.setAmount(block.getReward());
+        try {
+            rewardTransaction.setTransactionHash(cryptography.toHexString(cryptography.getSha(rewardTransaction.getTransactionId()+rewardTransaction.getSource()+rewardTransaction.getDestination()+rewardTransaction.getAmount())));
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
         block.addTransaction(rewardTransaction);
         return block;
     }
 
+    public void computeHash( @NotNull Block block) {
+        String hash = "null";
+        System.out.println("diff : " + block.getDifficultyLevel());
+        nonce = -1;
 
-    public Block mine(Block block, Config config) {
-        //Renew Configs
-        config.coreConfig(config);
+        String transactionStringToHash = "";
 
-        computeHash(config.getDifficultyLevel(), block);
-        return block;
+        for (int i = 0; i < block.getTransactions().size(); i++)
+
+            transactionStringToHash += block.getTransactions().get(i).getTransactionHash();    //TODO : FIX TRANSACTION HASH ALGORITHM
+
+        try {
+            do {
+                nonce++;
+                block.setDate(new java.util.Date());
+                String stringToHash = nonce + block.getIndex() + block.getDate().toString() + block.getPreviousHash() + transactionStringToHash;
+                Cryptography cryptography = new Cryptography();
+
+                hash = cryptography.toHexString(cryptography.getSha(stringToHash));
+
+                if (hash.startsWith(block.getDifficultyLevel())) {
+                    System.out.println("string to hash " + stringToHash);
+                    break;
+                }
+            } while (true);
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        block.setNonce(nonce);
+        block.setHash(hash);
+
     }
 
     //Sends block to CoreService to confirm mining
-    public Block sendBlock(Block block, Config config) {
+    public void sendBlock(Block block) {
 
         try {
 
             CloseableHttpClient httpClient = HttpClientBuilder.create().build();
             HttpPost httpPost = new HttpPost(config.getBlockChainCoreAddress() + "/pow");
             Gson gson = new Gson();
-
+            block.setDate(null);
             StringEntity params = new StringEntity(gson.toJson(block));
             httpPost.addHeader("Content-Type", "application/json");
             httpPost.setEntity(params);
             CloseableHttpResponse httpResponse = httpClient.execute(httpPost);
-            System.out.println(httpResponse.getEntity().getContent());
+            System.out.println(httpResponse.getStatusLine());
+//            System.out.println(httpResponse.getEntity().getContent());
         } catch (IOException e) {
             e.printStackTrace();
             e.printStackTrace();
         }
 
 
-        return block;
     }
-
 
 //    public Boolean mineStatus(Response response, Config config) {
 //
@@ -127,39 +155,9 @@ public class MinerService {
 //            e.printStackTrace();
 //        }
 //
+//
 //        return false;
 //    }
-
-    private void computeHash(String difficultyLevel, @NotNull Block block) {
-        String hash = "null";
-
-        nonce = -1;
-
-        String transactionStringToHash = "";
-        for (int i = 0; i < block.getTransactions().size(); i++)
-            transactionStringToHash += block.getTransactions().get(i).getTransactionHash();
-        try {
-            do {
-                nonce++;
-
-                String stringToHash = nonce + block.getIndex() + block.getPreviousHash() + transactionStringToHash;
-                Cryptography cryptography = new Cryptography();
-
-                hash = cryptography.toHexString(cryptography.getSha(stringToHash));
-
-                if (hash.startsWith(difficultyLevel)) {
-                    System.out.println(stringToHash);
-                    break;
-                }
-            } while (true);
-
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        block.setNonce(nonce);
-        block.setHash(hash);
-
-    }
 
     public List<Transaction> getTransactionList() {
         List<Transaction> currentTransactions = new ArrayList<>();

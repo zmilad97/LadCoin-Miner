@@ -11,6 +11,9 @@ public class Block {
     private String previousHash;
     private long nonce;
     private List<Transaction> transactions;
+    private String difficultyLevel;
+    private Double reward;
+
 
     public Block(int index, Date date, List<Transaction> transactions) {
         this.index = index;
@@ -96,6 +99,21 @@ public class Block {
         this.nonce = nonce;
     }
 
+    public String getDifficultyLevel() {
+        return difficultyLevel;
+    }
+
+    public void setDifficultyLevel(String difficultyLevel) {
+        this.difficultyLevel = difficultyLevel;
+    }
+
+    public Double getReward() {
+        return reward;
+    }
+
+    public void setReward(Double reward) {
+        this.reward = reward;
+    }
 
     public void addTransaction(Transaction transaction) {
         transactions.add(transaction);

@@ -31,27 +31,30 @@ public class MinerController {
 
     }
 
-    @RequestMapping(value = "/config", method = RequestMethod.POST)
+   /* @RequestMapping(value = "/config", method = RequestMethod.POST)
     public void configMiner(@RequestBody Config config) {
         this.config = config;
         this.config.coreConfig(this.config);
-    }
+    }*/
 
-    @GetMapping("/mine")
-    public Block mine(){
-        config.coreConfig(config);
-        return minerService.sendBlock(minerService.mine(minerService.findBlock(config),config),config);
+    //TODO :MAKE CURRENT CONFIG & TEST CONNECTION
+    @RequestMapping("/mine")
+    public Block mine() {
+        Block block = minerService.findBlock();
+        minerService.computeHash(block);
+        minerService.sendBlock(block);
+        return block;
     }
 
     @RequestMapping(value = "/minerTest")
-    public void minerTest(){
+    public void minerTest() {
         try {
 
             CloseableHttpClient httpClient = HttpClientBuilder.create().build();
             HttpPost httpPost = new HttpPost("http://localhost:8181/test");
             StringEntity params = new StringEntity("{\"transactionId\":\"1\"}");
 
-            httpPost.addHeader("Content-Type","application/json");
+            httpPost.addHeader("Content-Type", "application/json");
             httpPost.setEntity(params);
 
             CloseableHttpResponse httpResponse = httpClient.execute(httpPost);
@@ -64,8 +67,8 @@ public class MinerController {
 
     }
 
-    @GetMapping("/test")
-    public Block testBlock(){
+    @RequestMapping("/test")
+    public Block testBlock() {
 
         HttpClient httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
@@ -78,7 +81,7 @@ public class MinerController {
                 .build();
         HttpResponse<String> response = null;
         try {
-            response = httpClient.send(request,HttpResponse.BodyHandlers.ofString());
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             System.out.println(response.body());
 
@@ -96,18 +99,16 @@ public class MinerController {
         System.out.println(block[1]);
         System.out.println(block[1].getIndex());
         System.out.println(block[1].getPreviousHash());
-        System.out.println( block[1].getTransactions().get(1).getAmount());
+        System.out.println(block[1].getTransactions().get(1).getAmount());
 
         return null;
     }
-
-
 
     @RequestMapping(value = "/testMine")
     public Object miner() {
 
         Block block = new Block(minerService.getBlocks().size(), new java.util.Date(), minerService.getTransactionList());
-        minerService.mine(block, this.config);
+        minerService.computeHash(block);
 
         return null;
     }
