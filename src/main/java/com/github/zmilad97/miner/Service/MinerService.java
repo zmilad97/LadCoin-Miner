@@ -10,6 +10,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +37,14 @@ public class MinerService {
     @Value("${app.wallet.public.id}")
     private String walletPublicId;
 
-    public Block findBlock() {
+    private final Cryptography cryptography;
+
+    @Autowired
+    public MinerService(Cryptography cryptography) {
+      this.cryptography = cryptography;
+    }
+
+  public Block findBlock() {
 
         final HttpClient httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
@@ -64,7 +72,6 @@ public class MinerService {
         LOG.debug("Reward: {}", block.getReward());
 
         //add reward transaction to Block transactions list
-        Cryptography cryptography = new Cryptography();
         Transaction rewardTransaction = new Transaction();
         rewardTransaction.setTransactionId("1");
         rewardTransaction.setSource(null);
