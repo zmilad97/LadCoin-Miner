@@ -8,6 +8,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,8 +21,9 @@ import java.net.http.HttpResponse;
 
 @RestController
 public class MinerController {
+    private final static Logger LOG = LoggerFactory.getLogger(MinerController.class);
 
-    MinerService minerService;
+    private final MinerService minerService;
 
     @Autowired
     public MinerController(MinerService minerService) {
@@ -58,8 +61,7 @@ public class MinerController {
             System.out.println(httpResponse.getEntity().getContent());
 
         } catch (IOException e) {
-            e.printStackTrace();
-            e.printStackTrace();
+          LOG.error(e.getMessage(),e);
         }
 
     }

@@ -8,6 +8,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +28,7 @@ import java.util.List;
 
 @Service
 public class MinerService {
+    private final static Logger LOG = LoggerFactory.getLogger(MinerService.class);
 
     @Value("${app.core.address}")
     private String coreAddress;
@@ -58,7 +61,7 @@ public class MinerService {
       //Converting response to Block Object
         Gson gson = new Gson();
         Block block = gson.fromJson(response.body(), Block.class);
-        System.out.println("Reward : " + block.getReward());
+        LOG.debug("Reward: {}", block.getReward());
 
         //add reward transaction to Block transactions list
         Cryptography cryptography = new Cryptography();
@@ -74,7 +77,7 @@ public class MinerService {
 
     public void computeHash( @NotNull Block block) {
         String hash = "null";
-        System.out.println("diff : " + block.getDifficultyLevel());
+        LOG.debug("diff: {}",block.getDifficultyLevel());
         long nonce = -1L;
 
         String transactionStringToHash = ""; //TODO: StringBuffer would be a better choice
@@ -91,7 +94,7 @@ public class MinerService {
             hash = cryptography.toHexString(cryptography.getSha(stringToHash));
 
             if (hash.startsWith(block.getDifficultyLevel())) {
-                System.out.println("string to hash " + stringToHash);
+                LOG.trace("string to hash {}",stringToHash);
                 break;
             }
         } while (true);
@@ -117,8 +120,7 @@ public class MinerService {
             System.out.println(httpResponse.getStatusLine());
 //            System.out.println(httpResponse.getEntity().getContent());
         } catch (IOException e) {
-            e.printStackTrace();
-            e.printStackTrace();
+          LOG.error(e.getMessage(),e);
         }
 
 
@@ -207,13 +209,11 @@ public class MinerService {
 
             return currentTransactions;
 
-        } catch (MalformedInputException e) {
-            e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         }
 
-        return null;
+      return null;
     }
 
     public List<Block> getBlocks() {
