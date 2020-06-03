@@ -37,14 +37,14 @@ public class MinerController {
         this.config.coreConfig(this.config);
     }*/
 
-    //TODO :MAKE CURRENT CONFIG & TEST CONNECTION
-    @RequestMapping("/mine")
-    public Block mine() {
-        Block block = minerService.findBlock();
-        minerService.computeHash(block);
-        minerService.sendBlock(block);
-        return block;
-    }
+//    //TODO :MAKE CURRENT CONFIG & TEST CONNECTION
+//    @RequestMapping("/mine")
+//    public Block mine() {
+//        Block block = minerService.findBlock();
+//        minerService.computeHash(block);
+//        minerService.sendBlock(block);
+//        return block;
+//    }
 
     @RequestMapping(value = "/minerTest")
     public void minerTest() {
