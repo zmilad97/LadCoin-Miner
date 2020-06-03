@@ -1,7 +1,6 @@
 package com.github.zmilad97.miner.Controller;
 
 import com.github.zmilad97.miner.Module.Block;
-import com.github.zmilad97.miner.Module.Config;
 import com.github.zmilad97.miner.Service.MinerService;
 import com.google.gson.Gson;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -22,12 +21,10 @@ import java.net.http.HttpResponse;
 public class MinerController {
 
     MinerService minerService;
-    Config config;
 
     @Autowired
-    public MinerController(MinerService minerService, Config config) {
+    public MinerController(MinerService minerService) {
         this.minerService = minerService;
-        this.config = config;
 
     }
 

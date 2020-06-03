@@ -8,10 +8,13 @@ import java.security.NoSuchAlgorithmException;
 public class Cryptography {
 
 
-    public byte[] getSha(String input) throws NoSuchAlgorithmException {
-
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        return md.digest(input.getBytes(StandardCharsets.UTF_8));
+    public byte[] getSha(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            return md.digest(input.getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException e){
+            throw new IllegalStateException(e);
+        }
     }
 
     public String toHexString(byte[] hash) {

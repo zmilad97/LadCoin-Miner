@@ -8,6 +8,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -20,22 +21,24 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.MalformedInputException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class MinerService {
-    private int nonce;
 
-    private Config config = new Config();
+    @Value("${app.core.address}")
+    private String coreAddress;
+
+    @Value("${app.wallet.public.id}")
+    private String walletPublicId;
 
     public Block findBlock() {
 
         final HttpClient httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
                 .build();
-        String address = config.getBlockChainCoreAddress()+"/block"; //todo: convey config params with each block here  :  !checked
+        String address = coreAddress +"/block"; //todo: convey config params with each block here  :  !checked
 
         HttpRequest request = HttpRequest.newBuilder()
                 .GET()
@@ -48,13 +51,11 @@ public class MinerService {
 
             response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
 
-        //Converting response to Block Object
+      //Converting response to Block Object
         Gson gson = new Gson();
         Block block = gson.fromJson(response.body(), Block.class);
         System.out.println("Reward : " + block.getReward());
@@ -64,13 +65,9 @@ public class MinerService {
         Transaction rewardTransaction = new Transaction();
         rewardTransaction.setTransactionId("1");
         rewardTransaction.setSource(null);
-        rewardTransaction.setDestination(config.getWalletPublicId());
+        rewardTransaction.setDestination(walletPublicId);
         rewardTransaction.setAmount(block.getReward());
-        try {
-            rewardTransaction.setTransactionHash(cryptography.toHexString(cryptography.getSha(rewardTransaction.getTransactionId()+rewardTransaction.getSource()+rewardTransaction.getDestination()+rewardTransaction.getAmount())));
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
+        rewardTransaction.setTransactionHash(cryptography.toHexString(cryptography.getSha(rewardTransaction.getTransactionId()+rewardTransaction.getSource()+rewardTransaction.getDestination()+rewardTransaction.getAmount())));
         block.addTransaction(rewardTransaction);
         return block;
     }
@@ -78,32 +75,27 @@ public class MinerService {
     public void computeHash( @NotNull Block block) {
         String hash = "null";
         System.out.println("diff : " + block.getDifficultyLevel());
-        nonce = -1;
+        long nonce = -1L;
 
-        String transactionStringToHash = "";
+        String transactionStringToHash = ""; //TODO: StringBuffer would be a better choice
 
         for (int i = 0; i < block.getTransactions().size(); i++)
-
             transactionStringToHash += block.getTransactions().get(i).getTransactionHash();    //TODO : FIX TRANSACTION HASH ALGORITHM
 
-        try {
-            do {
-                nonce++;
-                block.setDate(new java.util.Date());
-                String stringToHash = nonce + block.getIndex() + block.getDate().toString() + block.getPreviousHash() + transactionStringToHash;
-                Cryptography cryptography = new Cryptography();
+        do {
+            nonce++;
+            block.setDate(new java.util.Date());
+            String stringToHash = nonce + block.getIndex() + block.getDate().toString() + block.getPreviousHash() + transactionStringToHash;
+            Cryptography cryptography = new Cryptography();
 
-                hash = cryptography.toHexString(cryptography.getSha(stringToHash));
+            hash = cryptography.toHexString(cryptography.getSha(stringToHash));
 
-                if (hash.startsWith(block.getDifficultyLevel())) {
-                    System.out.println("string to hash " + stringToHash);
-                    break;
-                }
-            } while (true);
+            if (hash.startsWith(block.getDifficultyLevel())) {
+                System.out.println("string to hash " + stringToHash);
+                break;
+            }
+        } while (true);
 
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
         block.setNonce(nonce);
         block.setHash(hash);
 
@@ -115,7 +107,7 @@ public class MinerService {
         try {
 
             CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-            HttpPost httpPost = new HttpPost(config.getBlockChainCoreAddress() + "/pow");
+            HttpPost httpPost = new HttpPost(coreAddress + "/pow");
             Gson gson = new Gson();
             block.setDate(null);
             StringEntity params = new StringEntity(gson.toJson(block));
