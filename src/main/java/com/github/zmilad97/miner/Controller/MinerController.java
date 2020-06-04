@@ -1,7 +1,6 @@
 package com.github.zmilad97.miner.Controller;
 
 import com.github.zmilad97.miner.Module.Block;
-import com.github.zmilad97.miner.Module.Config;
 import com.github.zmilad97.miner.Service.MinerService;
 import com.google.gson.Gson;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -9,6 +8,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,14 +21,13 @@ import java.net.http.HttpResponse;
 
 @RestController
 public class MinerController {
+    private final static Logger LOG = LoggerFactory.getLogger(MinerController.class);
 
-    MinerService minerService;
-    Config config;
+    private final MinerService minerService;
 
     @Autowired
-    public MinerController(MinerService minerService, Config config) {
+    public MinerController(MinerService minerService) {
         this.minerService = minerService;
-        this.config = config;
 
     }
 
@@ -37,14 +37,14 @@ public class MinerController {
         this.config.coreConfig(this.config);
     }*/
 
-    //TODO :MAKE CURRENT CONFIG & TEST CONNECTION
-    @RequestMapping("/mine")
-    public Block mine() {
-        Block block = minerService.findBlock();
-        minerService.computeHash(block);
-        minerService.sendBlock(block);
-        return block;
-    }
+//    //TODO :MAKE CURRENT CONFIG & TEST CONNECTION
+//    @RequestMapping("/mine")
+//    public Block mine() {
+//        Block block = minerService.findBlock();
+//        minerService.computeHash(block);
+//        minerService.sendBlock(block);
+//        return block;
+//    }
 
     @RequestMapping(value = "/minerTest")
     public void minerTest() {
@@ -61,8 +61,7 @@ public class MinerController {
             System.out.println(httpResponse.getEntity().getContent());
 
         } catch (IOException e) {
-            e.printStackTrace();
-            e.printStackTrace();
+          LOG.error(e.getMessage(),e);
         }
 
     }

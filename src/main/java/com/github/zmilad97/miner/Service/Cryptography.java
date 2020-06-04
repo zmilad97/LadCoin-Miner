@@ -1,16 +1,26 @@
 package com.github.zmilad97.miner.Service;
 
+import org.springframework.stereotype.Service;
+
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+@Service
 public class Cryptography {
 
+    private final MessageDigest md;
 
-    public byte[] getSha(String input) throws NoSuchAlgorithmException {
+    public Cryptography() {
+        try {
+            md = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
+    public byte[] getSha(String input) {
         return md.digest(input.getBytes(StandardCharsets.UTF_8));
     }
 
@@ -27,6 +37,5 @@ public class Cryptography {
         return hexString.toString();
 
     }
-
 
 }
