@@ -1,6 +1,7 @@
 package com.github.zmilad97.miner.Service;
 
-import com.github.zmilad97.miner.Module.*;
+import com.github.zmilad97.miner.Module.Block;
+import com.github.zmilad97.miner.Module.Transaction;
 import com.google.gson.Gson;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -23,7 +24,6 @@ import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.MalformedInputException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -95,7 +95,7 @@ public class MinerService {
         do {
             nonce++;
             block.setDate(new java.util.Date().toString());
-            String stringToHash = nonce + block.getIndex() + block.getDate().toString() + block.getPreviousHash() + transactionStringToHash;
+            String stringToHash = nonce + block.getIndex() + block.getDate() + block.getPreviousHash() + transactionStringToHash;
             Cryptography cryptography = new Cryptography();
 
             hash = cryptography.toHexString(cryptography.getSha(stringToHash));
@@ -124,7 +124,7 @@ public class MinerService {
             httpPost.addHeader("Content-Type", "application/json");
             httpPost.setEntity(params);
             CloseableHttpResponse httpResponse = httpClient.execute(httpPost);
-            System.out.println(httpResponse.getStatusLine());
+            LOG.info(String.valueOf(httpResponse.getStatusLine()));
 //            System.out.println(httpResponse.getEntity().getContent());
         } catch (IOException e) {
           LOG.error(e.getMessage(),e);
@@ -215,8 +215,6 @@ public class MinerService {
 
             return currentBlocks;
 
-        } catch (MalformedInputException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
