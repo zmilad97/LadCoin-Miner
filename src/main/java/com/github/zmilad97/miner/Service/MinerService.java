@@ -49,7 +49,7 @@ public class MinerService {
         final HttpClient httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
                 .build();
-        String address = coreAddress +"/block"; //todo: convey config params with each block here  :  !checked
+        String address = coreAddress +"/block";
 
         HttpRequest request = HttpRequest.newBuilder()
                 .GET()
@@ -84,17 +84,17 @@ public class MinerService {
 
     public void computeHash( @NotNull Block block) {
         String hash = "null";
-        LOG.debug("diff: {}",block.getDifficultyLevel());
+        LOG.debug("diff : {}",block.getDifficultyLevel());
         long nonce = -1L;
 
-        String transactionStringToHash = ""; //TODO: StringBuffer would be a better choice
+        StringBuffer transactionStringToHash = new StringBuffer();
 
         for (int i = 0; i < block.getTransactions().size(); i++)
-            transactionStringToHash += block.getTransactions().get(i).getTransactionHash();    //TODO : FIX TRANSACTION HASH ALGORITHM
+            transactionStringToHash.append(block.getTransactions().get(i).getTransactionHash());
 
         do {
             nonce++;
-            block.setDate(new java.util.Date());
+            block.setDate(new java.util.Date().toString());
             String stringToHash = nonce + block.getIndex() + block.getDate().toString() + block.getPreviousHash() + transactionStringToHash;
             Cryptography cryptography = new Cryptography();
 
@@ -119,7 +119,7 @@ public class MinerService {
             CloseableHttpClient httpClient = HttpClientBuilder.create().build();
             HttpPost httpPost = new HttpPost(coreAddress + "/pow");
             Gson gson = new Gson();
-            block.setDate(null);
+//            block.setDate(null);
             StringEntity params = new StringEntity(gson.toJson(block));
             httpPost.addHeader("Content-Type", "application/json");
             httpPost.setEntity(params);
@@ -160,68 +160,6 @@ public class MinerService {
 //        return false;
 //    }
 
-    public List<Transaction> getTransactionList() {
-        List<Transaction> currentTransactions = new ArrayList<>();
-        Gson gson = new Gson();
-
-        try {
-
-            URL url = new URL("http://localhost:8080/trx/current");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setRequestProperty("Accept", "application/json");
-
-            if (connection.getResponseCode() != 200) {
-                throw new RuntimeException("Failed , http error code : " + connection.getResponseCode());
-            }
-
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-
-            StringBuilder sb = new StringBuilder();
-            int cb;
-            while ((cb = bufferedReader.read()) != -1) {
-                sb.append((char) cb);
-            }
-
-            //fixing Strings
-            sb.deleteCharAt(sb.length() - 1);
-            sb.deleteCharAt(0);
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append('"');
-            stringBuilder.append("transactionId");
-
-            String[] strings = sb.toString().split(stringBuilder.toString());
-
-            //converting to json
-            for (int i = 1; i < strings.length; i++) {
-                StringBuilder strb = new StringBuilder();
-                strb.append('{');
-                strb.append('"');
-                strb.append("transactionId");
-                strb.append(strings[i]);
-
-                if (i != strings.length - 1) {
-                    strb.deleteCharAt(strb.length() - 1);
-                    strb.deleteCharAt(strb.length() - 1);
-                }
-
-                Transaction transaction = gson.fromJson(strb.toString(), Transaction.class);
-                currentTransactions.add(transaction);
-
-            }
-
-
-//            sb.deleteCharAt(sb.length() - 1);
-//            sb.deleteCharAt(0);
-
-            return currentTransactions;
-
-        } catch (IOException e) {
-            LOG.error(e.getMessage(),e);
-        }
-
-      return null;
-    }
 
     public List<Block> getBlocks() {
         List<Block> currentBlocks = new ArrayList<>();

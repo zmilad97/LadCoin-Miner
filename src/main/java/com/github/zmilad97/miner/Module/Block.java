@@ -1,12 +1,11 @@
 package com.github.zmilad97.miner.Module;
 
-import java.util.Date;
 import java.util.List;
 
 public class Block {
 
     private int index;
-    private Date date;
+    private String date;
     private String hash;
     private String previousHash;
     private long nonce;
@@ -15,7 +14,7 @@ public class Block {
     private Double reward;
 
 
-    public Block(int index, Date date, List<Transaction> transactions) {
+    public Block(int index, String date, List<Transaction> transactions) {
         this.index = index;
         this.date = date;
         this.transactions = transactions;
@@ -59,11 +58,11 @@ public class Block {
         this.index = index;
     }
 
-    public Date getDate() {
+    public String getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(String date) {
         this.date = date;
     }
 
