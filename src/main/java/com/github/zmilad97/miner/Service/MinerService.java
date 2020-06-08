@@ -1,13 +1,7 @@
 package com.github.zmilad97.miner.Service;
 
 import com.github.zmilad97.miner.Module.Block;
-import com.github.zmilad97.miner.Module.Transaction;
 import com.google.gson.Gson;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,11 +13,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,52 +24,11 @@ public class MinerService {
     @Value("${app.core.address}")
     private String coreAddress;
 
-    @Value("${app.wallet.public.id}")
-    private String walletPublicId;
-
     private final Cryptography cryptography;
 
     @Autowired
     public MinerService(Cryptography cryptography) {
       this.cryptography = cryptography;
-    }
-
-  public Block findBlock() {
-
-        final HttpClient httpClient = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_2)
-                .build();
-        String address = coreAddress +"/block";
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .GET()
-                .uri(URI.create(address))
-                .setHeader("User-Agent", "Miner")
-                .build();
-
-        HttpResponse<String> response = null;
-        try {
-
-            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-
-      //Converting response to Block Object
-        Gson gson = new Gson();
-        Block block = gson.fromJson(response.body(), Block.class);
-        LOG.debug("Reward: {}", block.getReward());
-
-        //add reward transaction to Block transactions list
-        Transaction rewardTransaction = new Transaction();
-        rewardTransaction.setTransactionId("1");
-        rewardTransaction.setSource(null);
-        rewardTransaction.setDestination(walletPublicId);
-        rewardTransaction.setAmount(block.getReward());
-        rewardTransaction.setTransactionHash(cryptography.toHexString(cryptography.getSha(rewardTransaction.getTransactionId()+rewardTransaction.getSource()+rewardTransaction.getDestination()+rewardTransaction.getAmount())));
-        block.addTransaction(rewardTransaction);
-        return block;
     }
 
     public void computeHash( @NotNull Block block) {
@@ -111,27 +60,6 @@ public class MinerService {
 
     }
 
-    //Sends block to CoreService to confirm mining
-    public void sendBlock(Block block) {
-
-        try {
-
-            CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-            HttpPost httpPost = new HttpPost(coreAddress + "/pow");
-            Gson gson = new Gson();
-//            block.setDate(null);
-            StringEntity params = new StringEntity(gson.toJson(block));
-            httpPost.addHeader("Content-Type", "application/json");
-            httpPost.setEntity(params);
-            CloseableHttpResponse httpResponse = httpClient.execute(httpPost);
-            LOG.info(String.valueOf(httpResponse.getStatusLine()));
-//            System.out.println(httpResponse.getEntity().getContent());
-        } catch (IOException e) {
-          LOG.error(e.getMessage(),e);
-        }
-
-
-    }
 
 //    public Boolean mineStatus(Response response, Config config) {
 //
