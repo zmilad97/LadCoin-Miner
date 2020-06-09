@@ -39,6 +39,7 @@ public class MinerStarter implements ApplicationRunner {
             Block block = coreClient.findBlock();
             if (block != null) {
                 minerService.setCurrentChain();
+                minerService.currentTransactions(block);
                 minerService.computeHash(block);
 
                 coreClient.sendBlock(block);
