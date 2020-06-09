@@ -1,7 +1,6 @@
 package com.github.zmilad97.miner.Service;
 
 import com.github.zmilad97.miner.Module.Block;
-import com.github.zmilad97.miner.Module.Transaction;
 import com.google.gson.Gson;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -19,6 +18,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 
 @Service
 public class CoreClient {
@@ -35,6 +35,8 @@ public class CoreClient {
     public CoreClient(Cryptography cryptography) {
         this.cryptography=  cryptography;
     }
+
+
 
 
     public Block findBlock() {
@@ -66,13 +68,13 @@ public class CoreClient {
         LOG.debug("Reward: {}", block.getReward());
 
         //add reward transaction to Block transactions list
-        Transaction rewardTransaction = new Transaction();
+       /* Transaction rewardTransaction = new Transaction();
         rewardTransaction.setTransactionId("1");
         rewardTransaction.setSource(null);
         rewardTransaction.setDestination(walletPublicId);
         rewardTransaction.setAmount(block.getReward());
         rewardTransaction.setTransactionHash(cryptography.toHexString(cryptography.getSha(rewardTransaction.getTransactionId()+rewardTransaction.getSource()+rewardTransaction.getDestination()+rewardTransaction.getAmount())));
-        block.addTransaction(rewardTransaction);
+        block.addTransaction(rewardTransaction);*/  // TODO : FIX reward Transaction
         return block;
     }
 
@@ -95,5 +97,37 @@ public class CoreClient {
         } catch (IOException e) {
             LOG.error(e.getMessage(),e);
         }
+    }
+
+
+    public List<Block> currentChain(){
+
+        final HttpClient httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)
+                .build();
+        String address = coreAddress +"/chain";
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(address))
+                .setHeader("User-Agent", "Miner")
+                .build();
+
+        HttpResponse<String> response = null;
+        try {
+
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        if(response.statusCode() == 404)
+            return null;
+
+        Gson gson = new Gson();
+        List <Block> chain = gson.fromJson(response.body(), List.class);
+
+        return chain;
+
     }
 }

@@ -1,5 +1,7 @@
 package com.github.zmilad97.miner.Module;
 
+import com.github.zmilad97.miner.Module.Transaction.Transaction;
+
 import java.util.List;
 
 public class Block {
@@ -23,6 +25,8 @@ public class Block {
 
     public Block() {
     }
+
+
 
 //    public String computeHash(String condition) {
 //
