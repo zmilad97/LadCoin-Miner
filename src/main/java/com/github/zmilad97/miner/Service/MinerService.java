@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
@@ -66,30 +65,36 @@ public class MinerService {
     }
 
     public Block currentTransactions(Block block) {
-        for (int i = 0; i < block.getTransactions().size(); i++)
-            if (!verifyTransaction(blockService
-                    .findTransactionByTransactionHash(block.getTransactions().get(i)), block.getTransactions().get(i)))
-                block.getTransactions().remove(i);
+        LOG.debug("current transaction start");
+//        for (int i = 0; i < block.getTransactions().size(); i++)
+//            if (!verifyTransaction(blockService
+//                    .findTransactionByTransactionHash(block.getTransactions().get(i)), block.getTransactions().get(i)))
+//                block.getTransactions().remove(block.getTransactions().get(i));
+            LOG.debug("current transaction end");
         return block;
+
     }
 
     private boolean verifyTransaction(Transaction outputTransaction, Transaction transaction) {
-        boolean result;
+        boolean result = true;
+        //TODO : just for  test
+        if(result == true)
+            return result;
         try {
             Signature ecdsaVerify = Signature.getInstance("SHA256withECDSA");
             KeyFactory keyFactory = KeyFactory.getInstance("EC");
 
             EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.getDecoder()
-                    .decode(outputTransaction.getTransactionOutput().getPublicKeyScript()));
+                    .decode(outputTransaction.getTransactionInput().getPubKey()));
 
             PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
             ecdsaVerify.initVerify(publicKey);
 
-            ecdsaVerify.update(transaction.getTransactionInput()
-                    .getScriptSignature().get("message").getBytes(StandardCharsets.UTF_8));
+//            ecdsaVerify.update(transaction.getTransactionInput()
+//                    .getSignature().get("message").getBytes(StandardCharsets.UTF_8));
 
             result = ecdsaVerify.verify(Base64.getDecoder().decode(
-                    transaction.getTransactionInput().getScriptSignature().get("signature")));
+                    transaction.getTransactionOutput().getSignature()));
 
             return result;
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException | SignatureException e) {

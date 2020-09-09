@@ -1,34 +1,42 @@
 package com.github.zmilad97.miner.Module.Transaction;
 
+
 import java.util.HashMap;
 
 public class TransactionInput {
-    private String previousTransactionHash;
-    private String indexReferenced;
-    private HashMap<String,String> scriptSignature;
+    private HashMap<Integer,String> previousTransactionHash;
+    private int indexReferenced;
+    private String pubKey;
 
-    public String getPreviousTransactionHash() {
-        return previousTransactionHash;
+    public TransactionInput() {
+        this.previousTransactionHash = new HashMap<Integer, String>();
     }
 
-    public void setPreviousTransactionHash(String previousTransactionHash) {
+    public void addPreviousTransactionHash(int i, String s ){
+        previousTransactionHash.put(i,s);
+    }
+    public void setPreviousTransactionHash(HashMap<Integer, String> previousTransactionHash) {
         this.previousTransactionHash = previousTransactionHash;
     }
 
-    public String getIndexReferenced() {
+    public HashMap<Integer, String> getPreviousTransactionHash() {
+        return previousTransactionHash;
+    }
+
+    public int getIndexReferenced() {
         return indexReferenced;
     }
 
-    public void setIndexReferenced(String indexReferenced) {
+    public void setIndexReferenced(int indexReferenced) {
         this.indexReferenced = indexReferenced;
     }
 
-    public HashMap<String, String> getScriptSignature() {
+    public String getPubKey() {
 
-        return scriptSignature;
+        return pubKey;
     }
 
-    public void setScriptSignature(HashMap<String,String> scriptSignature) {
-        this.scriptSignature = scriptSignature;
+    public void setPubKey(String scriptSignature) {
+        this.pubKey = scriptSignature;
     }
 }

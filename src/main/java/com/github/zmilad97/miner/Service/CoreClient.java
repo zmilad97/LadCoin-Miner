@@ -1,5 +1,7 @@
 package com.github.zmilad97.miner.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.zmilad97.miner.Module.Block;
 import com.google.gson.Gson;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -62,19 +64,21 @@ public class CoreClient {
         }
         if(response.statusCode() == 404)
             return null;
+
+        //TODO : Fix Parsing json object via ObjectMapper.readValue()
         //Converting response to Block Object
         Gson gson = new Gson();
-        Block block = gson.fromJson(response.body(), Block.class);
+        LOG.debug(response.body());
+        Block block = null;
+        try {
+            block = new ObjectMapper().readValue(response.body(), Block.class);
+        } catch (JsonProcessingException e) {
+            LOG.error(e.getLocalizedMessage());
+        }
+//        Block block = gson.fromJson(response.body(), Block.class);
         LOG.debug("Reward: {}", block.getReward());
+        LOG.debug(block.toString());
 
-        //add reward transaction to Block transactions list
-       /* Transaction rewardTransaction = new Transaction();
-        rewardTransaction.setTransactionId("1");
-        rewardTransaction.setSource(null);
-        rewardTransaction.setDestination(walletPublicId);
-        rewardTransaction.setAmount(block.getReward());
-        rewardTransaction.setTransactionHash(cryptography.toHexString(cryptography.getSha(rewardTransaction.getTransactionId()+rewardTransaction.getSource()+rewardTransaction.getDestination()+rewardTransaction.getAmount())));
-        block.addTransaction(rewardTransaction);*/  // TODO : FIX reward Transaction
         return block;
     }
 
@@ -83,12 +87,13 @@ public class CoreClient {
     public void sendBlock(Block block) {
 
         try {
-
+            ObjectMapper  objectMapper = new ObjectMapper();
             CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-            HttpPost httpPost = new HttpPost(coreAddress + "/pow");
+            HttpPost httpPost = new HttpPost(coreAddress + "/validMine");
             Gson gson = new Gson();
-//            block.setDate(null);
-            StringEntity params = new StringEntity(gson.toJson(block));
+//            StringEntity params = new StringEntity(gson.toJson(block));
+            StringEntity params = new StringEntity(objectMapper.writeValueAsString(block));
+            LOG.debug(params.getContent().toString());
             httpPost.addHeader("Content-Type", "application/json");
             httpPost.setEntity(params);
             CloseableHttpResponse httpResponse = httpClient.execute(httpPost);

@@ -38,19 +38,19 @@ public class MinerStarter implements ApplicationRunner {
         while (!(Thread.currentThread().isInterrupted())) {
             Block block = coreClient.findBlock();
             if (block != null) {
+                LOG.debug(String.valueOf(block));
                 minerService.setCurrentChain();
-                minerService.currentTransactions(block);
+//                minerService.currentTransactions(block);
                 minerService.computeHash(block);
-
                 coreClient.sendBlock(block);
-            } else {
-                LOG.debug("Waiting for next call 20 sec");
 
-                try {
-                    Thread.sleep(TimeUnit.SECONDS.toMillis(sleepBetweenCalls));
-                } catch (InterruptedException e) {
-                    break;
-                }
+            } else {
+                LOG.debug("Waiting for next call "+ sleepBetweenCalls+" sec");
+            }
+            try {
+                Thread.sleep(TimeUnit.SECONDS.toMillis(sleepBetweenCalls));
+            } catch (InterruptedException e) {
+                break;
             }
         }
     }
