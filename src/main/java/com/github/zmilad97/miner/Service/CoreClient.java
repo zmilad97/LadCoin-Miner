@@ -28,8 +28,6 @@ public class CoreClient {
     @Value("${app.core.address}")
     private String coreAddress;
 
-    @Value("${app.wallet.public.id}")
-    private String walletPublicId;
 
     private final Cryptography cryptography;
 
@@ -59,25 +57,24 @@ public class CoreClient {
 
             response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-        } catch (IOException | InterruptedException e) {
+            if(response.statusCode() == 404)
+                return null;
+            LOG.debug(response.body());
+        } catch (IOException|NullPointerException | InterruptedException e) {
             e.printStackTrace();
         }
-        if(response.statusCode() == 404)
-            return null;
 
         //TODO : Fix Parsing json object via ObjectMapper.readValue()
         //Converting response to Block Object
-        Gson gson = new Gson();
-        LOG.debug(response.body());
         Block block = null;
         try {
             block = new ObjectMapper().readValue(response.body(), Block.class);
-        } catch (JsonProcessingException e) {
+            LOG.debug(block.toString());
+        } catch (NullPointerException|JsonProcessingException e) {
             LOG.error(e.getLocalizedMessage());
         }
 //        Block block = gson.fromJson(response.body(), Block.class);
-        LOG.debug("Reward: {}", block.getReward());
-        LOG.debug(block.toString());
+//        LOG.debug("Reward: {}", block.getReward());
 
         return block;
     }
@@ -123,16 +120,15 @@ public class CoreClient {
 
             response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-        } catch (IOException | InterruptedException e) {
+            if(response.statusCode() == 404)
+                return null;
+        } catch (NullPointerException|IOException | InterruptedException e) {
             e.printStackTrace();
         }
-        if(response.statusCode() == 404)
-            return null;
 
         Gson gson = new Gson();
-        List <Block> chain = gson.fromJson(response.body(), List.class);
-
-        return chain;
+        assert response != null;
+        return  gson.fromJson(response.body(), List.class);
 
     }
 }
