@@ -1,23 +1,19 @@
 package com.github.zmilad97.miner.Service;
 
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
-import java.math.BigInteger;
+import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 @Service
 public class Cryptography {
-
     private final MessageDigest md;
 
+    @SneakyThrows
     public Cryptography() {
-        try {
-            md = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
+        md = MessageDigest.getInstance("SHA-256");
     }
 
     public byte[] getSha(String input) {
@@ -25,17 +21,7 @@ public class Cryptography {
     }
 
     public String toHexString(byte[] hash) {
-
-        BigInteger number = new BigInteger(1, hash);
-
-        StringBuilder hexString = new StringBuilder(number.toString(16));
-
-        while (hexString.length() < 32) {
-            hexString.insert(0, '0');
-        }
-
-        return hexString.toString();
+        return DatatypeConverter.printHexBinary(hash);
 
     }
-
 }
