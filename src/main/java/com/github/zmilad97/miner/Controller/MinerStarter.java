@@ -35,7 +35,7 @@ public class MinerStarter implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         LOG.debug("application just started, start to mine...");
 
-        while (!(Thread.currentThread().isInterrupted())) {
+        /*while (!(Thread.currentThread().isInterrupted())) {
             Block block = coreClient.findBlock();
             if (block != null) {
                 LOG.debug(String.valueOf(block));
@@ -52,7 +52,7 @@ public class MinerStarter implements ApplicationRunner {
             } catch (InterruptedException e) {
                 break;
             }
-        }
+        }*/
     }
 
 
