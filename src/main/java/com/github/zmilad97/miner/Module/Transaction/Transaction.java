@@ -1,42 +1,24 @@
 package com.github.zmilad97.miner.Module.Transaction;
 
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@AllArgsConstructor
+@NoArgsConstructor
 public class Transaction {
-
+    @Getter
+    @Setter
     private String transactionId;
+    @Getter
+    @Setter
     private TransactionInput TransactionInput;
+    @Getter
+    @Setter
     private TransactionOutput TransactionOutput;
+    @Getter
+    @Setter
     private String transactionHash;
-
-
-    public String getTransactionId() {
-        return transactionId;
-    }
-    public void setTransactionId(String transactionId) {
-        this.transactionId = transactionId;
-    }
-
-    public TransactionInput getTransactionInput() {
-        return TransactionInput;
-    }
-
-    public void setTransactionInput(TransactionInput transactionInput) {
-        this.TransactionInput = transactionInput;
-    }
-
-    public TransactionOutput getTransactionOutput() {
-        return TransactionOutput;
-    }
-
-    public void setTransactionOutput(TransactionOutput transactionOutput) {
-        this.TransactionOutput = transactionOutput;
-    }
-
-    public void setTransactionHash(String transactionHash) {
-        this.transactionHash = transactionHash;
-    }
-
-    public String getTransactionHash() {   //TODO : Think About This Method
-        return this.transactionHash;
-    }
 }
