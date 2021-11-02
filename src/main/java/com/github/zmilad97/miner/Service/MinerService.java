@@ -9,6 +9,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.net.http.HttpResponse;
@@ -17,13 +19,16 @@ import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @Slf4j
 public class MinerService {
-    @Value("${app.core.address}")
-    private String coreAddress;
-
+    @Value("${app.core.addresses}")
+    private List<String> coreAddress;
+    @Value("${app.miner.address}")
+    public static String MINER_ADDRESS;
 
     @Value("${app.wallet.signature}")
     private String walletSignature;
@@ -39,7 +44,7 @@ public class MinerService {
 
     public void computeHash(Block block) {
         String hash = "";
-        log.debug("diff : {}", block.getDifficultyLevel());
+        log.debug("Difficulty level : {}", block.getDifficultyLevel());
         long nonce = -1;
         StringBuilder transactionStringToHash = new StringBuilder();
 
@@ -52,15 +57,11 @@ public class MinerService {
             String stringToHash = nonce + block.getIndex() + block.getDate() + block.getPreviousHash() + transactionStringToHash;
 
             hash = cryptography.toHexString(cryptography.getSha(stringToHash));
-            log.debug("| Nonce {} | Hash {} | ", nonce, hash);
-            if (hash.startsWith(block.getDifficultyLevel())) {
-                log.trace("string to hash {}", stringToHash);
-                break;
-            }
-        } while (true);
+        } while (!hash.startsWith(block.getDifficultyLevel()));
 
         block.setNonce(nonce);
         block.setHash(hash);
+        log.info("Nonce {} | Hash {} | ", nonce, hash);
 
     }
 
@@ -121,10 +122,40 @@ public class MinerService {
 
 
     public void mine() {
-        BlockAddressPair pair = coreClient.findBlock();
+        BlockAddressPair pair;
+        try {
+            pair = coreClient.findBlock();
+        } catch (TimeoutException | InterruptedException e) {
+            log.error(e.toString());
+            return;
+        }
         computeHash(pair.getBlock());
         HttpResponse<String> response = coreClient.sendBlock(pair.getBlock(), pair.getAddress());
-        response.body();
+        if (response.statusCode() == 202)
+            log.info("Block accepted in node {}", pair.getAddress());
+        else if (response.statusCode() == 406)
+            log.info("Sent block is invalid");
+        else log.info(response.body());
+    }
+
+    public ResponseEntity<Boolean> getConfirmation(Block block) {
+        if (!block.getHash().startsWith(block.getDifficultyLevel()))
+            return new ResponseEntity<>(false, HttpStatus.NOT_ACCEPTABLE);
+
+        StringBuilder transactionStringToHash = new StringBuilder();
+        for (int i = 0; i < block.getTransactions().size(); i++)
+            transactionStringToHash.append(block.getTransactions().get(i).getTransactionHash());
+
+        String stringToHash = block.getNonce() + block.getIndex() + block.getDate() + block.getPreviousHash() + transactionStringToHash;
+        String blockHash = block.getHash();
+        String actualHash = cryptography.toHexString(cryptography.getSha(stringToHash));
+        log.info(stringToHash);
+        log.info("Block hash : {}", blockHash);
+        log.info("Actual hash : {} ", actualHash);
+        if (blockHash.equals(actualHash))
+            return new ResponseEntity<>(true, HttpStatus.ACCEPTED);
+        else
+            return new ResponseEntity<>(false, HttpStatus.NOT_ACCEPTABLE);
     }
 
     //TODO : Write A Method To Get All The Blocks And Save Transaction Snapshots
