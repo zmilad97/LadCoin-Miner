@@ -1,30 +1,29 @@
-package com.github.zmilad97.miner.requestHandler;
+package com.github.zmilad97.miner.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.zmilad97.miner.Module.Block;
 import com.github.zmilad97.miner.Module.BlockAddressPair;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.net.URI;
+import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
-
+@Service
 @Slf4j
-public class GetRequest extends BlockRequest {
+public class RequestHandler {
 
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final HttpClient client = HttpClient.newHttpClient();
 
-    @SneakyThrows
-    @Override
-    public List<BlockAddressPair> performAsync(List<String> addresses) {
-        if (addresses == null)
-            throw new NullPointerException();
+    public List<BlockAddressPair> getBlockAddressPairAsync(List<String> addresses) throws InterruptedException, TimeoutException {
 
         List<BlockAddressPair> blocks = new ArrayList<>();
         for (String address : addresses) {
@@ -46,12 +45,24 @@ public class GetRequest extends BlockRequest {
             else
                 return blocks;
         }
-        throw new TimeoutException();
+
+        if (blocks.size() == 0)
+            throw new TimeoutException();
+        else
+            return blocks;
     }
 
-    @Override
-    public Object perform(String address) {
-        return null;
+
+    @SneakyThrows
+    public HttpResponse<String> sendMinedBlock(String address, Block block) {
+        String body = mapper.writeValueAsString(block);
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(address + "/validMine"))
+                .setHeader("Content-Type", "application/json")
+                .setHeader("address", MinerService.MINER_ADDRESS)
+                .POST(HttpRequest.BodyPublishers
+                        .ofString(body)).build();
+        log.debug("send block to {}", address);
+        return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
 }
